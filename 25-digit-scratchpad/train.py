@@ -348,7 +348,7 @@ optimizer = torch.optim.AdamW(
 
 batch_size   = 16
 
-num_steps    = 3
+num_steps    = 300_000
 
 warmup_steps = 5_000
 
@@ -356,7 +356,7 @@ warmup_steps = 5_000
 
 Loss = 0
 
-LOG_EVERY = 1
+LOG_EVERY = 3_000
 
 loss_history = []       # (step, loss)
 
