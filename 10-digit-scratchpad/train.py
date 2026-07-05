@@ -107,17 +107,14 @@ ctx = nullcontext() if device_type == "cpu" else torch.amp.autocast(device_type 
 
 # digit-level representations, not memorisation.
 
-dataset_train = load_dataset("akash-deep321/Jason-Scratchpadded-10", split="train")
-
-if is_main:
-
-    print(f"train docs: {len(dataset_train)}")
+dataset_train = load_dataset("akash-deep321/Jason-Scratchpadded-10", split="train", streaming=True)
+d_t_temp = load_dataset("akash-deep321/Jason-Scratchpadded-10", split="train", streaming=True)
 
 # Set Loading and Dumping files for param logging during training
 
-LOAD_PATH = "/kaggle/input/models/akashdeep321/jason-25digit-scratch-logger/other/default/1/logger.pt"
+LOAD_PATH = "/kaggle/working/logger.pt"
 SAVE_PATH = "logger.pt"
-SAVE_STEPS = 300_000
+SAVE_STEPS = 1_000_000
 
 # ── Digit-level tokeniser ────────────────────────────────────────────────────
 
@@ -348,7 +345,7 @@ optimizer = torch.optim.AdamW(
 
 batch_size   = 16
 
-num_steps    = 300_000
+num_steps    = 1_000_000
 
 warmup_steps = 5_000
 
@@ -356,7 +353,7 @@ warmup_steps = 5_000
 
 Loss = 0
 
-LOG_EVERY = 3_000
+LOG_EVERY = 10_000
 
 loss_history = []       # (step, loss)
 
@@ -418,35 +415,43 @@ def to_digits(s):
 
     return tokens, targets
 
-parsed_dataset = []
-test_dataset = []
 flag=0
 
-for doc in dataset_train:
-
+def parsing(doc):
+    
+    global flag
+    
     s = doc["Input"] + '\n' + doc["Label"].strip()
     if(flag==0):
         print(s)
         flag=1
-    parsed_dataset.append(s)
+            
+    return s
  
 random.shuffle(parsed_dataset)
 
-if is_main:
-
-    print(f"Training pairs: {len(parsed_dataset)}")
 
 start_step, loss_history, batch_loss_history, accuracy_history = load_checkpoint()
 
+dataset_train.skip(start_step)
+ds = iter(dataset_train)
+
 total_start = time.perf_counter()
 
- 
+
 
 for step in tqdm(range(start_step, min(num_steps, start_step + SAVE_STEPS)), disable=not is_main):
 
     # Sample a batch
 
-    batch   = random.choices(parsed_dataset, k=batch_size)
+    batch = []
+    
+    for k in range(batch_size):
+        try:
+            batch.append(parsing(next(ds)))
+        except StopIteration:
+            ds = iter(d_t_temp)
+            batch.append(parsing(next(ds)))
 
     tok_np  = [to_digits(s)[0] for s in batch]
 
