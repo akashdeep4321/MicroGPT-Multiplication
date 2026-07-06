@@ -107,8 +107,8 @@ ctx = nullcontext() if device_type == "cpu" else torch.amp.autocast(device_type 
 
 # digit-level representations, not memorisation.
 
-dataset_train = load_dataset("akash-deep321/Jason-Scratchpadded-10", split="train", streaming=True)
-d_t_temp = load_dataset("akash-deep321/Jason-Scratchpadded-10", split="train", streaming=True)
+dataset_train = load_dataset("akash-deep321/Jason-10Digit-Scratchpadded50M", split="train", streaming=True)
+d_t_temp = load_dataset("akash-deep321/Jason-10Digit-Scratchpadded50M", split="train", streaming=True)
 
 # Set Loading and Dumping files for param logging during training
 
@@ -428,7 +428,6 @@ def parsing(doc):
             
     return s
  
-random.shuffle(parsed_dataset)
 
 
 start_step, loss_history, batch_loss_history, accuracy_history = load_checkpoint()
